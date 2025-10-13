@@ -49,7 +49,7 @@
 
 /* USER CODE BEGIN PV */
 
-QMC5883L_t magnetometer;
+QMC5883P_t magnetometer;
 
 /* USER CODE END PV */
 
@@ -82,7 +82,7 @@ void I2C_Scan(void)
 		result = HAL_I2C_IsDeviceReady(&hi2c1, i << 1, 1, 10);
 		if (result == HAL_OK)
 		{
-			printf("  Device found at addr: 0x%02\r\n", i);
+			printf("  Device found at addr: 0x%02X\r\n", i);
 			++found;
 		}
 	}
@@ -135,23 +135,13 @@ int main(void)
 	status = HAL_I2C_GetState(&hi2c1);
 	printf("I2C GetState: %d\r\n", status);
 
-	if (status == HAL_I2C_STATE_READY) {
-		printf("I2C is READY\r\n");
-	} else if (status == HAL_I2C_STATE_BUSY) {
-		printf("I2C is BUSY!\r\n");
-	} else if (status == HAL_I2C_STATE_BUSY_TX) {
-		printf("I2C is BUSY_TX\r\n");
-	} else if (status == HAL_I2C_STATE_BUSY_RX) {
-		printf("I2C is BUSY_RX\r\n");
-	}
-
 // Try I2C scan to see if bus works
 	printf("\r\nTrying I2C bus scan...\r\n");
     I2C_Scan();
     printf("\r\n");
     
     printf("Initializing QMC5883L magnetometer...\r\n");
-    status = QMC5883L_Init(&magnetometer, &hi2c1);
+    status = QMC5883P_Init(&magnetometer, &hi2c1);
     
     if (status == HAL_OK) 
 	{
@@ -179,7 +169,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 	while (1)
 	{
-		if (QMC5883L_ReadRaw(&magnetometer) == HAL_OK)
+		if (QMC5883P_ReadRaw(&magnetometer) == HAL_OK)
 		{
 			printf("X: %6d  Y: %6d  Z: %6d\r\n",
 		        magnetometer.x,
