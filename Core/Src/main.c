@@ -22,6 +22,7 @@
 #include "usart.h"
 #include "gpio.h"
 #include "qmc5883l.h"
+#include "filters.h"
 #include <stdint.h>
 #include <stdio.h>
 
@@ -50,6 +51,7 @@
 /* USER CODE BEGIN PV */
 
 QMC5883P_t magnetometer;
+LowPassFilter_t filter;
 
 /* USER CODE END PV */
 
@@ -160,6 +162,7 @@ int main(void)
         }
     }
     
+	LowPassFilter_Init(&filter, 0.1f);
     printf("\r\nStarting measurements...\r\n");
     printf("Move a magnet near the sensor to see values change!\r\n\r\n");
     HAL_Delay(1000);
@@ -171,10 +174,12 @@ int main(void)
 	{
 		if (QMC5883P_ReadRaw(&magnetometer) == HAL_OK)
 		{
-			printf("X: %6d  Y: %6d  Z: %6d\r\n",
-		        magnetometer.x,
-		        magnetometer.y,
-		        magnetometer.z
+			LowPassFilter_Update(&filter, magnetometer.x, magnetometer.y, magnetometer.z);
+			Vector3f_t filtered = filter.filtered;
+			printf("X: %6.0f  Y: %6.0f  Z: %6.0f\r\n",
+		        filtered.x,
+		        filtered.y,
+		        filtered.z
 			);
 			HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 		}
