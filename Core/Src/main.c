@@ -21,8 +21,10 @@
 #include "i2c.h"
 #include "usart.h"
 #include "gpio.h"
-#include "qmc5883l.h"
+#include "qmc5883p.h"
+#include "ssd1306.h"
 #include "filters.h"
+#include "calibration.h"
 #include <stdint.h>
 #include <stdio.h>
 
@@ -52,6 +54,8 @@
 
 QMC5883P_t magnetometer;
 LowPassFilter_t filter;
+MagCalibration_t mag_cal;
+CalibrationData_t cal_data;
 
 /* USER CODE END PV */
 
@@ -142,7 +146,7 @@ int main(void)
     I2C_Scan();
     printf("\r\n");
     
-    printf("Initializing QMC5883L magnetometer...\r\n");
+    printf("Initializing QMC5883P magnetometer...\r\n");
     status = QMC5883P_Init(&magnetometer, &hi2c1);
     
     if (status == HAL_OK) 
@@ -153,19 +157,42 @@ int main(void)
 	else 
 	{
         printf("ERROR: Failed to initialize magnetometer (code: %d)\r\n", status);
-
-		// LED blinking rapidly to indicate error
         while(1) 
 		{
             HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
             HAL_Delay(200);
         }
     }
-    
+	printf("Initializing OLED display...\r\n");
+	if (SSD1306_Init(&hi2c1)) 
+	{
+		printf("OLED initialized!\r\n");
+		SSD1306_Clear();
+		SSD1306_GotoXY(10, 0);
+		SSD1306_Puts("Magnetometer", SSD1306_WHITE);
+		SSD1306_GotoXY(30, 16);
+		SSD1306_UpdateScreen();
+		HAL_Delay(2000);
+	} 
+	else
+		printf("OLED initialization failed!\r\n");
+		
+	Calibration_Init(&mag_cal);
+	Calibration_LoadDefaults(&mag_cal);
 	LowPassFilter_Init(&filter, 0.1f);
-    printf("\r\nStarting measurements...\r\n");
-    printf("Move a magnet near the sensor to see values change!\r\n\r\n");
-    HAL_Delay(1000);
+
+	printf("Using saved calibration values\r\n");
+	SSD1306_Clear();
+	SSD1306_GotoXY(10, 20);
+	SSD1306_Puts("Magnetometer", SSD1306_WHITE);
+	SSD1306_GotoXY(30, 32);
+	SSD1306_Puts("READY!", SSD1306_WHITE);
+	SSD1306_UpdateScreen();
+	HAL_Delay(1000);
+
+	printf("Starting measurements...\r\n");
+	printf("Move a magnet near the sensor to see values change!\r\n\r\n");
+	HAL_Delay(1000);
    /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -174,22 +201,50 @@ int main(void)
 	{
 		if (QMC5883P_ReadRaw(&magnetometer) == HAL_OK)
 		{
-			LowPassFilter_Update(&filter, magnetometer.x, magnetometer.y, magnetometer.z);
+			float cal_x, cal_y, cal_z;
+			Calibration_Apply(&mag_cal,
+							 magnetometer.x, magnetometer.y, magnetometer.z,
+							 &cal_x, &cal_y, &cal_z);
+			
+			LowPassFilter_Update(&filter, (int16_t)cal_x, (int16_t)cal_y, (int16_t)cal_z);
 			Vector3f_t filtered = filter.filtered;
-			printf("X: %6.0f  Y: %6.0f  Z: %6.0f\r\n",
-		        filtered.x,
-		        filtered.y,
-		        filtered.z
-			);
+			
+			float field_strength = Calibration_GetFieldStrength(filtered.x, filtered.y, filtered.z);
+			
+			SSD1306_Clear();
+			SSD1306_GotoXY(0, 0);
+			SSD1306_Puts("MAGNETOMETER", SSD1306_WHITE);
+			
+			SSD1306_Printf(0, 16, SSD1306_WHITE, "X:%7.0f", filtered.x);
+			SSD1306_Printf(0, 28, SSD1306_WHITE, "Y:%7.0f", filtered.y);
+			SSD1306_Printf(0, 40, SSD1306_WHITE, "Z:%7.0f", filtered.z);
+			
+			SSD1306_DrawLine(0, 50, 127, 50, SSD1306_WHITE);
+			
+			SSD1306_Printf(0, 54, SSD1306_WHITE, "%.1fuT", field_strength);
+			
+			if (mag_cal.is_calibrated) 
+			{
+				SSD1306_GotoXY(90, 54);
+				SSD1306_Puts("CAL", SSD1306_WHITE);
+			} 
+			else 
+			{
+				SSD1306_GotoXY(90, 54);
+				SSD1306_Puts("RAW", SSD1306_WHITE);
+			}
+			
+			SSD1306_UpdateScreen();
+			
+			printf("X:%7.1f Y:%7.1f Z:%7.1f | %.1f uT | %s\r\n",
+				   filtered.x, filtered.y, filtered.z,
+				   field_strength,
+				   mag_cal.is_calibrated ? "CAL" : "RAW");
+			
 			HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 		}
-		else
-			printf("ERROR: failed to read sensor\r\n");
-		HAL_Delay(200);
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-  }
+		HAL_Delay(100);
+	}
   /* USER CODE END 3 */
 }
 

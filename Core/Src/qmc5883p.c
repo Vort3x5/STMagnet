@@ -1,4 +1,4 @@
-#include "qmc5883l.h"
+#include "qmc5883p.h"
 #include <stdio.h>
 
 HAL_StatusTypeDef QMC5883P_Init(QMC5883P_t *dev, I2C_HandleTypeDef *hi2c)
