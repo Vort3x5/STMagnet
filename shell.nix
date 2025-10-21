@@ -9,10 +9,11 @@ pkgs.mkShell {
 		screen
 		minicom
 		picocom
+		texlive.combined.scheme-full
+		evince
     ];
 
 	shellHook = ''
-		export NIXPKGS_ALLOW_UNFREE=1
 		fish
 	'';
 }

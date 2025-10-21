@@ -1,0 +1,120 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[polish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\title{Sprawozdanie wstępne:\\Cyfrowy magnetometr z wyświetlaczem OLED}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Cel projektu}
+
+Celem projektu jest zbudowanie działającego magnetometru cyfrowego z wykorzystaniem mikrokontrolera STM32, sensora magnetycznego oraz wyświetlacza OLED. Urządzenie będzie mierzyć natężenie lokalnego pola magnetycznego w trzech osiach przestrzennych i prezentować wyniki w czasie rzeczywistym na ekranie.
+
+\section{Wykorzystane komponenty sprzętowe}
+
+\begin{itemize}
+    \item \textbf{STM32 Nucleo-F446RE} -- płytka rozwojowa z mikrokontrolerem ARM Cortex-M4
+    \item \textbf{GY-271 (QMC5883P)} -- trzyosiowy magnetometr cyfrowy
+    \item \textbf{Wyświetlacz OLED 128×64} -- monochromatyczny ekran z kontrolerem SSD1306
+    \item Przewody połączeniowe i płytka stykowa
+\end{itemize}
+
+\section{Podstawy fizyczne}
+
+\subsection{Efekt Halla}
+
+Projekt wykorzystuje czujnik magnetyczny oparty na \textbf{efekcie Halla}, który jest podstawowym zjawiskiem fizycznym umożliwiającym detekcję pola magnetycznego. Gdy przez przewodnik płynie prąd elektryczny $I$ w kierunku prostopadłym do zewnętrznego pola magnetycznego $\vec{B}$, na nośniki ładunku działa siła Lorentza:
+
+\begin{equation}
+\vec{F} = q(\vec{v} \times \vec{B})
+\end{equation}
+
+gdzie $q$ to ładunek nośnika, a $\vec{v}$ jego prędkość. Powoduje to nagromadzenie ładunków po jednej stronie przewodnika i powstanie napięcia Halla $V_H$ prostopadłego zarówno do kierunku prądu, jak i pola magnetycznego:
+
+\begin{equation}
+V_H = \frac{IB}{nqt}
+\end{equation}
+
+gdzie $n$ to koncentracja nośników ładunku, a $t$ grubość przewodnika. Pomiar tego napięcia pozwala na wyznaczenie natężenia pola magnetycznego.
+
+\subsection{Pole magnetyczne Ziemi}
+
+Magnetometr będzie głównie wykrywał \textbf{pole magnetyczne Ziemi}, które w Polsce ma natężenie około 50~$\mu$T (mikrotesli). Składa się ono z:
+
+\begin{itemize}
+    \item Składowej horyzontalnej $B_h \approx 20$~$\mu$T
+    \item Składowej wertykalnej $B_v \approx 45$~$\mu$T
+\end{itemize}
+
+Nachylenie inklinacji magnetycznej w naszej lokalizacji wynosi około 67°.
+
+\subsection{Komunikacja I²C}
+
+Czujnik magnetyczny komunikuje się z mikrokontrolerem przez magistralę \textbf{I²C} (Inter-Integrated Circuit), wykorzystującą dwie linie:
+\begin{itemize}
+    \item SDA (Serial Data) -- linia danych
+    \item SCL (Serial Clock) -- linia zegarowa
+\end{itemize}
+
+Transmisja danych odbywa się w sposób szeregowy, a stan logiczny 0 lub 1 jest reprezentowany przez różne poziomy napięcia zgodnie z prawami elektromagnetyzmu.
+
+\subsection{Kalibracja i kompensacja zakłóceń}
+
+Dokładny pomiar pola magnetycznego wymaga uwzględnienia:
+
+\begin{itemize}
+    \item \textbf{Zakłóceń twardych} (hard-iron) -- stałe przesunięcie pochodzące od elementów ferromagnetycznych w otoczeniu czujnika
+    \item \textbf{Zakłóceń miękkich} (soft-iron) -- odkształcenie pola magnetycznego przez materiały ferromagnetyczne
+\end{itemize}
+
+Kalibracja polega na wyznaczeniu elipsoidy pomiarowej w przestrzeni 3D i przekształceniu jej na sferę poprzez operacje przesunięcia i skalowania:
+
+\begin{equation}
+\vec{B}_{kal} = S \cdot (\vec{B}_{raw} - \vec{O})
+\end{equation}
+
+gdzie $\vec{O}$ to wektor offsetów (hard-iron), a $S$ to macierz skal (soft-iron).
+
+\subsection{Filtracja sygnału}
+
+Ze względu na szumy pomiarowe, zastosowany zostanie \textbf{cyfrowy filtr dolnoprzepustowy} pierwszego rzędu (exponential moving average):
+
+\begin{equation}
+y_n = \alpha \cdot x_n + (1-\alpha) \cdot y_{n-1}
+\end{equation}
+
+gdzie $\alpha \in (0,1)$ to współczynnik wygładzania, $x_n$ to aktualny pomiar surowy, a $y_n$ to wartość filtrowana. Filtr ten tłumi szybkie zmiany sygnału, zachowując powolne zmiany pola magnetycznego.
+
+\section{Planowana funkcjonalność}
+
+\begin{enumerate}
+    \item Ciągły pomiar trzech składowych pola magnetycznego (X, Y, Z)
+    \item Obliczanie całkowitej wartości natężenia pola: $|\vec{B}| = \sqrt{B_x^2 + B_y^2 + B_z^2}$
+    \item Kalibracja czujnika w celu eliminacji zakłóceń systematycznych
+    \item Cyfrowa filtracja sygnału w celu redukcji szumów
+    \item Wyświetlanie pomiarów w czasie rzeczywistym na ekranie OLED
+    \item Wizualizacja danych przez interfejs szeregowy UART
+\end{enumerate}
+
+\section{Oczekiwane rezultaty}
+
+Po zakończeniu projektu urządzenie powinno:
+\begin{itemize}
+    \item Wykrywać pole magnetyczne Ziemi z dokładnością $\pm 5$~$\mu$T
+    \item Reagować na zbliżenie magnesów trwałych
+    \item Stabilnie działać po kalibracji, eliminując lokalne zakłócenia
+    \item Prezentować wyniki w czytelnej formie na wyświetlaczu
+\end{itemize}
+
+Projekt pozwoli na praktyczną weryfikację zjawisk elektromagnetycznych, w szczególności efektu Halla oraz właściwości pola magnetycznego Ziemi.
+
+\end{document}
