@@ -6,8 +6,6 @@ pkgs.mkShell {
 		stm32cubemx
 		gcc-arm-embedded
 		stlink
-		screen
-		minicom
 		picocom
 		texlive.combined.scheme-full
 		evince
