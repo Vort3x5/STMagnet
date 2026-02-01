@@ -44,7 +44,6 @@ HAL_StatusTypeDef QMC5883P_Init(QMC5883P_t *dev, I2C_HandleTypeDef *hi2c)
         return HAL_ERROR;
     }
     
-    // Soft reset
     printf("QMC5883P: Soft reset...\r\n");
     config[0] = QMC5883P_REG_CONF2;
     config[1] = 0x80;  // Soft reset bit
@@ -55,7 +54,6 @@ HAL_StatusTypeDef QMC5883P_Init(QMC5883P_t *dev, I2C_HandleTypeDef *hi2c)
     }
     HAL_Delay(50);
     
-    // Unlock hidden registers
     printf("QMC5883P: Unlocking hidden registers...\r\n");
     config[0] = QMC5883P_REG_UNLOCK;
     config[1] = QMC5883P_UNLOCK_VALUE;
@@ -65,7 +63,6 @@ HAL_StatusTypeDef QMC5883P_Init(QMC5883P_t *dev, I2C_HandleTypeDef *hi2c)
         return status;
     }
     
-    // Configure XYZ sign
     printf("QMC5883P: Configuring XYZ sign...\r\n");
     config[0] = QMC5883P_REG_XYZ_SIGN;
     config[1] = QMC5883P_XYZ_SIGN_VALUE;
@@ -75,7 +72,6 @@ HAL_StatusTypeDef QMC5883P_Init(QMC5883P_t *dev, I2C_HandleTypeDef *hi2c)
         return status;
     }
     
-    // Configure CONF1 (but not continuous mode yet)
     printf("QMC5883P: Configuring CONF1...\r\n");
     config[0] = QMC5883P_REG_CONF1;
     config[1] = 0x01;  // Standby mode first
@@ -85,7 +81,6 @@ HAL_StatusTypeDef QMC5883P_Init(QMC5883P_t *dev, I2C_HandleTypeDef *hi2c)
         return status;
     }
     
-    // Configure CONF2
     printf("QMC5883P: Configuring CONF2...\r\n");
     config[0] = QMC5883P_REG_CONF2;
     config[1] = 0x00;
@@ -97,7 +92,6 @@ HAL_StatusTypeDef QMC5883P_Init(QMC5883P_t *dev, I2C_HandleTypeDef *hi2c)
     
     HAL_Delay(10);
     
-    // Now set continuous mode with proper config
     printf("QMC5883P: Starting continuous mode...\r\n");
     config[0] = QMC5883P_REG_CONF1;
     config[1] = 0x8D;  // OSR=512(10), RNG=8G(00), ODR=100Hz(11), Mode=Cont(01)

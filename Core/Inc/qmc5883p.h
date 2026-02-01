@@ -6,7 +6,6 @@
 
 #define QMC5883P_ADDR       (0x2C << 1)
 
-// Register addresses for QMC5883P (different from QMC5883L!)
 #define QMC5883P_REG_CHIP_ID    0x00
 #define QMC5883P_REG_XOUT_L     0x01
 #define QMC5883P_REG_XOUT_H     0x02
@@ -20,7 +19,6 @@
 #define QMC5883P_REG_UNLOCK     0x0D
 #define QMC5883P_REG_XYZ_SIGN   0x29
 
-// Expected chip ID
 #define QMC5883P_CHIP_ID        0x80
 
 // Configuration values

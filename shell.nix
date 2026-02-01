@@ -7,8 +7,6 @@ pkgs.mkShell {
 		gcc-arm-embedded
 		stlink
 		picocom
-		texlive.combined.scheme-full
-		evince
     ];
 
 	shellHook = ''

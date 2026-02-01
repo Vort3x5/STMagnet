@@ -137,11 +137,9 @@ int main(void)
 	printf("I2C1 State before init: %d\r\n", hi2c1.State);
 	printf("I2C1 Error Code: 0x%08lX\r\n", hi2c1.ErrorCode);
 
-	// Check if I2C is ready
 	status = HAL_I2C_GetState(&hi2c1);
 	printf("I2C GetState: %d\r\n", status);
 
-// Try I2C scan to see if bus works
 	printf("\r\nTrying I2C bus scan...\r\n");
     I2C_Scan();
     printf("\r\n");

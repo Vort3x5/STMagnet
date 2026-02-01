@@ -109,16 +109,13 @@ static const uint8_t Font5x7[][5] = {
     {0x02, 0x01, 0x02, 0x04, 0x02}, // ~
 };
 
-// Write command to SSD1306
 static void SSD1306_WriteCommand(uint8_t command) {
     HAL_I2C_Mem_Write(ssd1306_i2c, SSD1306_I2C_ADDR, 0x00, 1, &command, 1, 100);
 }
 
-// Initialize SSD1306
 uint8_t SSD1306_Init(I2C_HandleTypeDef *hi2c) {
     ssd1306_i2c = hi2c;
     
-    // Check if device is ready
     if (HAL_I2C_IsDeviceReady(ssd1306_i2c, SSD1306_I2C_ADDR, 3, 100) != HAL_OK) {
         return 0;
     }
@@ -164,12 +161,10 @@ uint8_t SSD1306_Init(I2C_HandleTypeDef *hi2c) {
     return 1;
 }
 
-// Fill entire screen
 void SSD1306_Fill(uint8_t color) {
     memset(SSD1306_Buffer, (color == SSD1306_BLACK) ? 0x00 : 0xFF, sizeof(SSD1306_Buffer));
 }
 
-// Update screen from buffer
 void SSD1306_UpdateScreen(void) {
     for (uint8_t i = 0; i < 8; i++) {
         SSD1306_WriteCommand(0xB0 + i);
@@ -179,7 +174,6 @@ void SSD1306_UpdateScreen(void) {
     }
 }
 
-// Draw pixel
 void SSD1306_DrawPixel(uint8_t x, uint8_t y, uint8_t color) {
     if (x >= SSD1306_WIDTH || y >= SSD1306_HEIGHT) return;
     
@@ -190,13 +184,11 @@ void SSD1306_DrawPixel(uint8_t x, uint8_t y, uint8_t color) {
     }
 }
 
-// Set cursor position
 void SSD1306_GotoXY(uint8_t x, uint8_t y) {
     SSD1306_X = x;
     SSD1306_Y = y;
 }
 
-// Put char
 char SSD1306_Putc(char ch, uint8_t color) {
     if (SSD1306_WIDTH < (SSD1306_X + 6) || SSD1306_HEIGHT < (SSD1306_Y + 8)) {
         return 0;
@@ -217,7 +209,6 @@ char SSD1306_Putc(char ch, uint8_t color) {
     return ch;
 }
 
-// Put string
 void SSD1306_Puts(char *str, uint8_t color) {
     while (*str) {
         if (SSD1306_Putc(*str, color) != *str) {
@@ -227,13 +218,11 @@ void SSD1306_Puts(char *str, uint8_t color) {
     }
 }
 
-// Clear screen
 void SSD1306_Clear(void) {
     SSD1306_Fill(SSD1306_BLACK);
     SSD1306_UpdateScreen();
 }
 
-// Printf at position
 void SSD1306_Printf(uint8_t x, uint8_t y, uint8_t color, const char *format, ...) {
     char buffer[32];
     va_list args;
@@ -245,7 +234,6 @@ void SSD1306_Printf(uint8_t x, uint8_t y, uint8_t color, const char *format, ...
     SSD1306_Puts(buffer, color);
 }
 
-// Draw line
 void SSD1306_DrawLine(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint8_t color) {
     int16_t dx = abs(x1 - x0);
     int16_t dy = abs(y1 - y0);
@@ -270,7 +258,6 @@ void SSD1306_DrawLine(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint8_t co
     }
 }
 
-// Draw rectangle
 void SSD1306_DrawRectangle(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
     SSD1306_DrawLine(x, y, x + w, y, color);
     SSD1306_DrawLine(x + w, y, x + w, y + h, color);
@@ -278,7 +265,6 @@ void SSD1306_DrawRectangle(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t c
     SSD1306_DrawLine(x, y + h, x, y, color);
 }
 
-// Draw filled rectangle
 void SSD1306_DrawFilledRectangle(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
     for (uint8_t i = 0; i <= h; i++) {
         SSD1306_DrawLine(x, y + i, x + w, y + i, color);
